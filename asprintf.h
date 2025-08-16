@@ -2,7 +2,9 @@
     asprintf.h - make SURE you have the asprintf function
 
     define ASPRINTF_IMPL in one of your files using this! this is a single header library!
-    you can also define HAVE_ASPRINTF to 1 if you are SURE you want the implementation here
+    you can also define HAVE_ASPRINTF to 1 if you are SURE you want the implementation here.
+    also creates a "aprintf" and "vaprintf" function, to remove the "strp" param. yes,
+    it does replace the int return values, but just strlen the output!
 
     Copyright 2025 Thomas Shrader
 
@@ -37,6 +39,11 @@
 # if defined(__GLIBC__) || defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__)
 #  define HAVE_ASPRINTF 1
 # endif
+#endif
+
+// restrict keyword wrapper
+#ifndef restrict
+# define restrict
 #endif
 
 // if we dont have it, recreate it
@@ -83,4 +90,23 @@ int asprintf(char **restrict strp, const char *restrict fmt, ...) {
 
 #endif // ASPRINTF_IMPL
 #endif // !HAVE_ASPRINTF
+
+char *vaprintf(const char *restrict fmt, va_list args) {
+    char *ptr = NULL;
+    if (vasprintf(&ptr, fmt, args) < 0) {
+        return NULL;
+    }
+    return ptr;
+}
+
+char *aprintf(const char *restrict fmt, ...) {
+    va_list arg;
+    va_start(arg, fmt);
+
+    char *out = vaprintf(fmt, arg);
+
+    va_end(arg);
+    return out;
+}
+
 #endif // ASPRINTF_H
